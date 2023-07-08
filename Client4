@@ -1,0 +1,69 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
+#define SERVER_IP "192.168.205.130"
+#define SERVER_PORT 8484
+#define BUFFER_SIZE 1024
+
+int main() {
+    int clientSocket;
+    struct sockaddr_in serverAddress;
+    char buffer[BUFFER_SIZE];
+    ssize_t bytesRead;
+
+    // Create socket
+    clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (clientSocket < 0) {
+        perror("Failed to create socket");
+        exit(EXIT_FAILURE);
+    }
+
+    // Set server address information
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_port = htons(SERVER_PORT);
+    if (inet_pton(AF_INET, SERVER_IP, &(serverAddress.sin_addr)) <= 0) {
+        perror("Failed to set server address");
+        exit(EXIT_FAILURE);
+    }
+
+    // Connect to the server
+    if (connect(clientSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0) {
+        perror("Failed to connect to server");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Connected to server\n");
+
+    // Get user input
+    printf("Enter a string: ");
+    fgets(buffer, BUFFER_SIZE, stdin);
+    buffer[strcspn(buffer, "\n")] = '\0'; // Remove newline character from input
+
+    // Send user input to server
+    ssize_t bytesSent = write(clientSocket, buffer, strlen(buffer));
+    if (bytesSent < 0) {
+        perror("Failed to write to socket");
+        close(clientSocket);
+        exit(EXIT_FAILURE);
+    }
+
+    // Receive response from server
+    bytesRead = read(clientSocket, buffer, BUFFER_SIZE);
+    if (bytesRead < 0) {
+        perror("Failed to read from socket");
+        close(clientSocket);
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Received reply from server: %s\n", buffer);
+
+    // Close socket
+    close(clientSocket);
+
+    return 0;
+}
