@@ -1,0 +1,35 @@
+import socket
+
+SERVER_HOST = '192.168.205.130'
+SERVER_PORT = 8484
+BUFFER_SIZE = 1024
+
+def start_server():
+    # Create socket
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    # Bind socket to a specific IP address and port
+    server_socket.bind((SERVER_HOST, SERVER_PORT))
+
+    # Listen for incoming connections
+    server_socket.listen(5)
+    print("Server listening on {}:{}".format(SERVER_HOST, SERVER_PORT))
+
+    while True:
+        # Accept incoming connections
+        client_socket, client_address = server_socket.accept()
+        print("Client connected:", client_address)
+
+        # Receive data from client
+        data = client_socket.recv(BUFFER_SIZE).decode('utf-8')
+        print("Received data from client:", data)
+
+        # Send response to client
+        response = "Hello from server!"
+        client_socket.send(response.encode('utf-8'))
+
+        # Close client socket
+        client_socket.close()
+
+if _name_ == '_main_':
+    start_server()
