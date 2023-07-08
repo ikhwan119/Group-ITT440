@@ -1,0 +1,77 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#define BUFFER_SIZE 1024
+
+int main() {
+    int clientSocket;
+    struct sockaddr_in serverAddress;
+    char serverIP[16];
+    int serverPort;
+    char buffer[BUFFER_SIZE];
+    ssize_t bytesRead;
+
+    // Capture user input for server IP address and port number
+    printf("Enter server IP address: ");
+    fgets(serverIP, sizeof(serverIP), stdin);
+    serverIP[strcspn(serverIP, "\n")] = '\0';
+
+    printf("Enter server port number: ");
+    scanf("%d", &serverPort);
+    while(getchar() != '\n');  // Clear input buffer
+
+    // Create socket
+    clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (clientSocket < 0) {
+        perror("Failed to create socket");
+        exit(EXIT_FAILURE);
+    }
+
+    // Set server address and port
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_port = htons(serverPort);
+    if (inet_pton(AF_INET, serverIP, &(serverAddress.sin_addr)) <= 0) {
+        perror("Invalid server IP address");
+        exit(EXIT_FAILURE);
+    }
+
+    // Connect to the server
+    if (connect(clientSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0) {
+        perror("Failed to connect to server");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Connected to server\n");
+
+    // Send data to server
+    printf("Enter data to send: ");
+    fgets(buffer, sizeof(buffer), stdin);
+    buffer[strcspn(buffer, "\n")] = '\0';
+
+    ssize_t bytesSent = send(clientSocket, buffer, strlen(buffer), 0);
+    if (bytesSent < 0) {
+        perror("Failed to send data to server");
+        close(clientSocket);
+        exit(EXIT_FAILURE);
+    }
+
+    // Receive response from server
+    bytesRead = read(clientSocket, buffer, BUFFER_SIZE);
+    if (bytesRead < 0) {
+        perror("Failed to read from socket");
+        close(clientSocket);
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Received response from server: %.*s\n", (int)bytesRead, buffer);
+
+    // Close socket
+    close(clientSocket);
+
+    return 0;
+}
