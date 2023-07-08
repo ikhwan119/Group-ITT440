@@ -1,0 +1,32 @@
+import socket
+
+SERVER_HOST = '192.168.205.130'
+SERVER_PORT = 8484
+BUFFER_SIZE = 1024
+
+def start_client():
+    # Create socket
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    try:
+        # Connect to the server
+        client_socket.connect((SERVER_HOST, SERVER_PORT))
+        print("Connected to server")
+
+        # Send data to server
+        data = "Hello from client!"
+        client_socket.send(data.encode('utf-8'))
+
+        # Receive response from server
+        response = client_socket.recv(BUFFER_SIZE).decode('utf-8')
+        print("Received response from server:", response)
+
+    except ConnectionRefusedError:
+        print("Connection refused. Make sure the server is running.")
+
+    finally:
+        # Close socket
+        client_socket.close()
+
+if _name_ == '_main_':
+    start_client()
